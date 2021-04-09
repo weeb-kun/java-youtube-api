@@ -1,9 +1,15 @@
 package com.weebkun.youtube.api.auth;
 
+import com.squareup.moshi.Moshi;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import com.weebkun.youtube.api.utils.exceptions.UnableToOpenBrowserException;
+import okhttp3.*;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -17,20 +23,30 @@ import java.util.Base64;
  */
 public class OAuth2 {
 
+    private static String clientId;
+    private static String secret;
+    private static String codeVerifier;
+    private static String authCode;
+
+    private static String accessToken;
+    private static String refreshToken;
+
     /**
      * requests the user for authorization through OAuth2.
      * @param clientId the clientId of the oauth token to use. see <a href="https://developers.google.com/youtube/v3/getting-started">the OAuth 2.0 page</a> for more info.
+     * @param clientSecret the client secret associated with the client id.
      * @param scopes the list of {@link Scopes} to use
-     * @param redirectUri the redirect uri provided for the oauth to redirect to. should be specified in the credentials page in your developer console.
-     * @see Scopes for more info
+     * @see Scopes
      */
-    public static void authorize(String clientId, String[] scopes, String redirectUri) throws NoSuchAlgorithmException, IOException {
+    public static void authorize(String clientId, String clientSecret, String[] scopes) throws NoSuchAlgorithmException {
+        OAuth2.clientId = clientId;
+        secret = clientSecret;
         // create code verifier and challenge
         SecureRandom random = new SecureRandom();
         byte[] verifier = new byte[32];
         random.nextBytes(verifier);
         // code verifier
-        String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(verifier);
+        codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(verifier);
         byte[] bytes = codeVerifier.getBytes(StandardCharsets.US_ASCII);
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
         messageDigest.update(bytes, 0, bytes.length);
@@ -45,7 +61,7 @@ public class OAuth2 {
                 "response_type=code&" +
                 "scope=%s&" +
                 "code_challenge=%s&" +
-                "code_challenge_method=S256", clientId, redirectUri, String.join(" ", scopes), codeChallenge);
+                "code_challenge_method=S256", clientId, "http%3A//127.0.0.1%3A5000", String.join("%20", scopes), codeChallenge);
 
         String os = System.getProperty("os.name").toLowerCase();
 
@@ -54,21 +70,72 @@ public class OAuth2 {
             if(Desktop.isDesktopSupported()) {
                 // windows
                 Desktop.getDesktop().browse(new URI(url));
+                getTokens();
             } else {
                 // unix or mac
                 Runtime runtime = Runtime.getRuntime();
                 if(os.contains("mac")) {
                     // mac
                     runtime.exec("open " + url);
+                    getTokens();
                 } else if(os.contains("nix") || os.contains("nux")) {
                     // linux or unix runtime
                     runtime.exec("xdg-open " + url);
+                    getTokens();
                 } else {
                     // os could not be found/ cannot launch browser
                     throw new UnableToOpenBrowserException();
                 }
             }
         } catch (URISyntaxException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getAccessToken() {
+        return accessToken;
+    }
+
+    public static String getRefreshToken() {
+        return refreshToken;
+    }
+
+    private static void getTokens() {
+        try {
+            // create server
+            HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 5000), 0);
+            server.createContext("/", request -> {
+                if (request.getRequestMethod().equals("GET")) {
+                    // get auth code
+                    authCode = request.getRequestURI().getQuery().split("&")[0].split("=")[1];
+                    if (authCode != "access_denied") {
+                        // got auth code
+                        // exchange for tokens
+                        RequestBody body = RequestBody.create(
+                                String.format(
+                                        "client_id=%s&" +
+                                                "client_secret=%s&" +
+                                                "code=%s&" +
+                                                "code_verifier=%s&" +
+                                                "redirect_uri=http://127.0.0.1%%3A5000&" +
+                                                "grant_type=authorization_code", clientId, secret, authCode, codeVerifier), MediaType.get("application/x-www-form-urlencoded"));
+                        Request req = new Request.Builder()
+                                .url("https://oauth2.googleapis.com/token")
+                                .post(body)
+                                .build();
+                        try (Response response = new OkHttpClient().newCall(req).execute()) {
+                            System.out.println("sending request");
+                            TokenResponse token = new Moshi.Builder().build().adapter(TokenResponse.class).fromJson(response.body().source());
+                            accessToken = token.access_token;
+                            refreshToken = token.refresh_token;
+                            System.out.println(accessToken);
+                            server.stop(10);
+                        }
+                    }
+                }
+            });
+            server.start();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
