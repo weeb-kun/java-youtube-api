@@ -2,6 +2,7 @@ package com.weebkun.api.auth;
 
 import com.squareup.moshi.Moshi;
 import com.sun.net.httpserver.HttpServer;
+import com.weebkun.api.Client;
 import com.weebkun.api.utils.exceptions.UnableToOpenBrowserException;
 import okhttp3.*;
 
@@ -136,6 +137,8 @@ public class OAuth2 {
                             TokenResponse token = new Moshi.Builder().build().adapter(TokenResponse.class).fromJson(response.body().source());
                             accessToken = token.access_token;
                             refreshToken = token.refresh_token;
+                            Client.accessToken = token.access_token;
+                            Client.refreshToken = token.refresh_token;
                             server.stop(10);
                             latch.countDown();
                         }
