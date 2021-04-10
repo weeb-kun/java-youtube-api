@@ -5,7 +5,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -106,12 +105,6 @@ public class Activity {
         public String channelTitle;
         public String type;
         public String groupId;
-
-        static class Thumbnail {
-            public String url;
-            public int width;
-            public int height;
-        }
     }
 
     static class Content {
