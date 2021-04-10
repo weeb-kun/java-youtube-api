@@ -91,6 +91,7 @@ public class OAuth2 {
                 }
             }
             try {
+                // lock this thread.
                 latch.await();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -140,6 +141,7 @@ public class OAuth2 {
                             refreshToken = token.refresh_token;
                             Client.accessToken = token.access_token;
                             Client.refreshToken = token.refresh_token;
+                            // stop server and release latch
                             server.stop(10);
                             latch.countDown();
                         }

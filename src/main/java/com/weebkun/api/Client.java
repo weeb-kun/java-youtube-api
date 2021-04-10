@@ -21,6 +21,11 @@ public class Client {
             chain -> chain.proceed(chain.request().newBuilder().addHeader("Authorization", "Bearer " + accessToken).build())
     ).build();
 
+    /**
+     * gets the main Okhttp client.
+     * it will automatically add the authorization header to all requests sent by this client.
+     * @return the Okhttp client.
+     */
     public static OkHttpClient getClient() {
         return client;
     }

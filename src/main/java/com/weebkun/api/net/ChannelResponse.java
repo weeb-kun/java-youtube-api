@@ -1,17 +1,17 @@
 package com.weebkun.api.net;
 
-import com.weebkun.api.Activity;
+import com.weebkun.api.Channel;
 
 import java.util.List;
 
 /**
- * json response for a GET /activities call.
+ * the http response returned from GET /channels
  */
-public class ActivityResponse {
+public class ChannelResponse {
     public String kind;
     public String etag;
     public String nextPageToken;
     public String prevPageToken;
     public PageInfo pageInfo;
-    public List<Activity> items;
+    public List<Channel> items;
 }
