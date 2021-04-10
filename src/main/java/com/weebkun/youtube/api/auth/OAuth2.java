@@ -17,6 +17,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 
 /**
  * class for authenticating to the youtube api using OAuth 2.0.
@@ -30,15 +32,17 @@ public class OAuth2 {
 
     private static String accessToken;
     private static String refreshToken;
+    private static final CountDownLatch latch = new CountDownLatch(1);
 
     /**
      * requests the user for authorization through OAuth2.
+     * note that this method will block the main thread.
      * @param clientId the clientId of the oauth token to use. see <a href="https://developers.google.com/youtube/v3/getting-started">the OAuth 2.0 page</a> for more info.
      * @param clientSecret the client secret associated with the client id.
      * @param scopes the list of {@link Scopes} to use
      * @see Scopes
      */
-    public static void authorize(String clientId, String clientSecret, String[] scopes) throws NoSuchAlgorithmException {
+    public static void authenticate(String clientId, String clientSecret, String[] scopes) throws NoSuchAlgorithmException {
         OAuth2.clientId = clientId;
         secret = clientSecret;
         // create code verifier and challenge
@@ -87,10 +91,17 @@ public class OAuth2 {
                     throw new UnableToOpenBrowserException();
                 }
             }
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
         }
     }
+
+    // todo async authentication
 
     public static String getAccessToken() {
         return accessToken;
@@ -128,8 +139,8 @@ public class OAuth2 {
                             TokenResponse token = new Moshi.Builder().build().adapter(TokenResponse.class).fromJson(response.body().source());
                             accessToken = token.access_token;
                             refreshToken = token.refresh_token;
-                            System.out.println(accessToken);
                             server.stop(10);
+                            latch.countDown();
                         }
                     }
                 }
