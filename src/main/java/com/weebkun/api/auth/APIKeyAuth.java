@@ -1,4 +1,4 @@
-package com.weebkun.youtube.api.auth;
+package com.weebkun.api.auth;
 
 /**
  * class for authenticating using an api key.

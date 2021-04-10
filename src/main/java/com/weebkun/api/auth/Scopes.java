@@ -1,4 +1,4 @@
-package com.weebkun.youtube.api.auth;
+package com.weebkun.api.auth;
 
 /**
  * provides flags for OAuth scopes.

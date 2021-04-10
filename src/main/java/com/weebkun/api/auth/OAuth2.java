@@ -1,10 +1,8 @@
-package com.weebkun.youtube.api.auth;
+package com.weebkun.api.auth;
 
 import com.squareup.moshi.Moshi;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import com.weebkun.youtube.api.utils.exceptions.UnableToOpenBrowserException;
+import com.weebkun.api.utils.exceptions.UnableToOpenBrowserException;
 import okhttp3.*;
 
 import java.awt.*;
@@ -18,7 +16,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 
 /**
  * class for authenticating to the youtube api using OAuth 2.0.

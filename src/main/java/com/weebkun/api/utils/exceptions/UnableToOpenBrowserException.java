@@ -1,4 +1,4 @@
-package com.weebkun.youtube.api.utils.exceptions;
+package com.weebkun.api.utils.exceptions;
 
 /**
  * thrown when the OS cannot be found when opening the browser.

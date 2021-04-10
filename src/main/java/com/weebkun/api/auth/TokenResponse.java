@@ -1,4 +1,4 @@
-package com.weebkun.youtube.api.auth;
+package com.weebkun.api.auth;
 
 public class TokenResponse {
     public String access_token;
