@@ -3,6 +3,7 @@ package com.weebkun.api.auth;
 import com.squareup.moshi.Moshi;
 import com.sun.net.httpserver.HttpServer;
 import com.weebkun.api.Client;
+import com.weebkun.api.net.TokenResponse;
 import com.weebkun.api.utils.exceptions.UnableToOpenBrowserException;
 import okhttp3.*;
 
@@ -132,9 +133,9 @@ public class OAuth2 {
                                 .url("https://oauth2.googleapis.com/token")
                                 .post(body)
                                 .build();
-                        try (Response response = new OkHttpClient().newCall(req).execute()) {
+                        try (Response response = Client.getClient().newCall(req).execute()) {
                             System.out.println("sending request");
-                            TokenResponse token = new Moshi.Builder().build().adapter(TokenResponse.class).fromJson(response.body().source());
+                            TokenResponse token = Client.moshi.adapter(TokenResponse.class).fromJson(response.body().source());
                             accessToken = token.access_token;
                             refreshToken = token.refresh_token;
                             Client.accessToken = token.access_token;

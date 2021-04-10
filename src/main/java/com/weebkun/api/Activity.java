@@ -1,5 +1,12 @@
 package com.weebkun.api;
 
+import com.weebkun.api.net.ActivityResponse;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,6 +19,83 @@ public class Activity {
     public String id;
     public Snippet snippet;
     public Content contentDetails;
+
+    public static List<Activity> getActivities(String channelId) {
+        return getActivities(channelId, new String[]{"contentDetails", "id", "snippet"});
+    }
+
+    public static List<Activity> getActivities(String channelId, String[] part) {
+        Request req = new Request.Builder().url(Client.root + "/activities?" +
+                String.format("channelId=%s&" +
+                        "part=%s", channelId, String.join("%2C", part))).build();
+        try(Response response = Client.getClient().newCall(req).execute()) {
+            ActivityResponse resp = Client.moshi.adapter(ActivityResponse.class).fromJson(response.body().source());
+            return resp.items;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static List<Activity> getActivities(String channelId, Content.Optional params) {
+        return getActivities(channelId, new String[]{"contentDetails", "id", "snippet"}, params);
+    }
+
+    public static List<Activity> getActivities(String channelId, String[] part, Content.Optional params) {
+        Request req = new Request.Builder().url(Client.root + "/activities?" +
+                String.format("channelId=%s&" +
+                        "part=%s"
+                        .concat(params.maxResults > 0 ? "&maxResults=" + params.maxResults : "")
+                        .concat(params.pageToken != null ? "&pageToken=" + params.pageToken : "")
+                        .concat(params.publishedAfter != null ? "&publishedAfter=" + params.publishedAfter.replaceAll(":", "%3A") : "")
+                        .concat(params.publishedBefore != null ? "&publishedBefore=" + params.publishedBefore.replaceAll(":", "%3A") : "")
+                        .concat(params.regionCode != null ? "&regionCode=" + params.regionCode : "")
+                        , channelId, String.join("%2C", part))).build();
+        try(Response response = Client.getClient().newCall(req).execute()) {
+            ActivityResponse resp = Client.moshi.adapter(ActivityResponse.class).fromJson(response.body().source());
+            return resp.items;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static List<Activity> getMyActivities(){
+        return getMyActivities(new String[]{"contentDetails", "id", "snippet"});
+    }
+
+    public static List<Activity> getMyActivities(String[] part) {
+        Request req = new Request.Builder().url(Client.root + "/activities?mine=true&" +
+                String.format("part=%s", String.join("%2C", part))).build();
+        try(Response response = Client.getClient().newCall(req).execute()) {
+            ActivityResponse resp = Client.moshi.adapter(ActivityResponse.class).fromJson(response.body().source());
+            return resp.items;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static List<Activity> getMyActivities(Content.Optional params) {
+        return getMyActivities(new String[]{"contentDetails", "id", "snippet"}, params);
+    }
+
+    public static List<Activity> getMyActivities(String[] part, Content.Optional params){
+        Request req = new Request.Builder().url(Client.root + "/activities?mine=true&" +
+                String.format("part=%s"
+                        .concat(params.maxResults > 0 ? "&maxResults=" + params.maxResults : "")
+                        .concat(params.pageToken != null ? "&pageToken=" + params.pageToken : "")
+                        .concat(params.publishedAfter != null ? "&publishedAfter=" + params.publishedAfter.replaceAll(":", "%3A") : "")
+                        .concat(params.publishedBefore != null ? "&publishedBefore=" + params.publishedBefore.replaceAll(":", "%3A") : "")
+                        .concat(params.regionCode != null ? "&regionCode=" + params.regionCode : ""), String.join("%2C", part))).build();
+        try(Response response = Client.getClient().newCall(req).execute()) {
+            ActivityResponse resp = Client.moshi.adapter(ActivityResponse.class).fromJson(response.body().source());
+            return resp.items;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     static class Snippet {
         public String publishedAt;
@@ -90,6 +174,17 @@ public class Activity {
             public String videoId;
             public String channelId;
             public String playlistId;
+        }
+
+        /**
+         * optional query params for get /activities
+         */
+        static class Optional {
+            public int maxResults;
+            public String pageToken;
+            public String publishedAfter;
+            public String publishedBefore;
+            public String regionCode;
         }
     }
 }

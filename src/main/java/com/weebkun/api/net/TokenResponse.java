@@ -1,4 +1,4 @@
-package com.weebkun.api.auth;
+package com.weebkun.api.net;
 
 public class TokenResponse {
     public String access_token;
